@@ -7,6 +7,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"syscall"
+	
 )
 
 var epoller *epoll
@@ -67,14 +68,14 @@ func Start() {
 			if conn == nil {
 				break
 			}
-			if _, _, err := wsutil.ReadClientData(conn); err != nil {
+			if msg, _, err := wsutil.ReadClientData(conn); err != nil {
 				if err := epoller.Remove(conn); err != nil {
 					log.Printf("Failed to remove %v", err)
 				}
 				conn.Close()
 			} else {
 				// This is commented out since in demo usage, stdout is showing messages sent from > 1M connections at very high rate
-				//log.Printf("msg: %s", string(msg))
+				log.Printf("msg: %s", string(msg))
 			}
 		}
 	}

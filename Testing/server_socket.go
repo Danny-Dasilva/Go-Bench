@@ -38,50 +38,73 @@ type myTLSResponse struct {
 // new messages being sent to our WebSocket
 // endpoint
 func reader(conn *websocket.Conn) {
+	ch := make(chan *myTLSResponse)
+    go func(ch chan  *myTLSResponse) {
+        // Uncomment this block to actually read from stdin
+        for {
+            mytlsresponse := new(myTLSResponse)
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			e := json.Unmarshal(message, &mytlsresponse)
+			if e != nil {
+				log.Print(e)
+			}
+
+
+			
+            ch <- mytlsresponse
+        }
+        
+       
+    }(ch)
+
+	i := 0
 	// wg := sync.WaitGroup{}
-	for i:=0; i<10; i++ {
+	for {
 		// wg.Add(1)
 		// go func(i int) {
 			// read in a message
+			if i < 10 {
+				options := options{i}
+				write := myTLSRequest{"ext", options}
+
+				// print out that message for clarity
+				// log.Println(string(p))
+
+				data, err := json.Marshal(write)
+				if err != nil {
+					log.Print("Request_Id_On_The_Left" )
+					
+				}
+
+				err = conn.WriteMessage(websocket.TextMessage, data)
+				if err != nil {
+					log.Print("Request_Id_On_The_Left" )
+				}
+			}
+
+			i++
+
+	
+			select {
+			case message := <-ch:
+				fmt.Println(message)
+			default:
+	
+			}
+
+
 			
-			options := options{i}
-			write := myTLSRequest{"ext", options}
-
-			// print out that message for clarity
-			// log.Println(string(p))
-
-			data, err := json.Marshal(write)
-			if err != nil {
-				log.Print("Request_Id_On_The_Left" )
-				
-			}
-
-			err = conn.WriteMessage(websocket.TextMessage, data)
-			if err != nil {
-				log.Print("Request_Id_On_The_Left" )
-				
-			}
-
-
-			// mytlsresponse := new(myTLSResponse)
-			// _, message, err := conn.ReadMessage()
-			// if err != nil {
-			// 	log.Println(err)
-			// 	return
-			// }
-			// e := json.Unmarshal(message, &mytlsresponse)
-			// if e != nil {
-			// 	log.Print(e)
-			// }
-
-
-			// fmt.Println(mytlsresponse)
 		// }(i)
 
 	}
 	// wg.Wait()
 	
 }
+
 
 func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	// upgrade this connection to a WebSocket

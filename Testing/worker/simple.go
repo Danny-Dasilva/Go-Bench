@@ -1,32 +1,47 @@
-package main // Tell go runtime your main lives here
+package main
 
-import ("fmt") // We need the fmt package to print to the stdout
+import (
+    "fmt"
+    "time"
+)
 
-
-var done = make(chan bool)
-var msgs = make(chan int)
-
-
-func main () {
-   go produce()
-   go consume()
-   <- done
-}
-
-
-func produce() {
-	i := 0
-    for{
-		i
-        msgs <- i
+func worker(id int, jobs <-chan int, results chan<- string) {
+    for j := range jobs {
+        // fmt.Println("worker", id, "started  job", j)
+        time.Sleep(time.Second)
+        if id == 2 {
+            time.Sleep(8 * time.Second)
+        }
+        l := fmt.Sprintf("worker", id, "finished job", j)
+        results <- l
     }
-    done <- true
 }
 
+func main() {
 
-func consume() {
+    const numJobs = 5
+    jobs := make(chan int, numJobs)
+    results := make(chan string, numJobs)
+
+    for w := 1; w <= 10; w++ {
+        go worker(w, jobs, results)
+    }
+    i := 1
     for {
-      msg := <-msgs
-      fmt.Println(msg)
-   }
+        // for j := 1; j <= numJobs; j++ {
+        i++
+        jobs <- i
+        
+        // close(jobs)
+    
+        // for a := 1; a <= numJobs; a++ {
+        r := <-results
+        if r {
+            fmt.Println(r)
+        } else {
+            continue
+        }
+
+    }
+    
 }
