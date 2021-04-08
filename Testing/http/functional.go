@@ -7,6 +7,7 @@ import (
     "net/http"
     "runtime"
     "time"
+    "io/ioutil"
 )
 
 var (
@@ -15,8 +16,8 @@ var (
 )
 
 func init() {
-    flag.IntVar(&reqs, "reqs",  10000, "Total requests")
-    flag.IntVar(&max, "concurrent", 100, "Maximum concurrent requests")
+    flag.IntVar(&reqs, "reqs",  100, "Total requests")
+    flag.IntVar(&max, "concurrent", 10000, "Maximum concurrent requests")
 }
 
 type Response struct {
@@ -37,18 +38,27 @@ func dispatcher(reqChan chan *http.Request) {
 }
 
 // Worker Pool
-func workerPool(reqChan chan *http.Request, respChan chan Response) {
-    t := &http.Transport{}
+func workerPool(reqChan chan *http.Request, respChan chan string) {
+
     for i := 0; i < max; i++ {
-        go worker(t, reqChan, respChan)
+        go worker(reqChan, respChan)
     }
 }
 
 // Worker
-func worker(t *http.Transport, reqChan chan *http.Request, respChan chan Response) {
+func worker(reqChan chan *http.Request, respChan chan string) {
     for req := range reqChan {
-        resp, err := t.RoundTrip(req)
-        r := Response{resp, err}
+        resp, err := http.DefaultTransport.RoundTrip(req)
+        // r := Response{resp, err}
+
+        bodyBytes, err := ioutil.ReadAll(resp.Body)
+        if err != nil {
+            fmt.Print("bodyBytes" + err.Error())
+        }
+        r := string(bodyBytes)
+
+
+
         respChan <- r
     }
 }
@@ -80,16 +90,65 @@ func consumer(respChan chan Response) (int64, int64) {
 }
 
 func main() {
+
+    start := time.Now()
+    defer func() {
+        fmt.Println("Execution Time: ", time.Since(start))
+    }()
+
+
     flag.Parse()
     runtime.GOMAXPROCS(runtime.NumCPU())
     
 	// runtime.GOMAXPROCS(1)
 	reqChan := make(chan *http.Request)
-    respChan := make(chan Response)
-    start := time.Now()
-    go dispatcher(reqChan)
+    respChan := make(chan string)
+    
+    // go dispatcher(reqChan)
     go workerPool(reqChan, respChan)
-    conns, size := consumer(respChan)
+    
+    
+    defer close(reqChan)
+
+    ch := make(chan *http.Request)
+    go func(ch chan *http.Request) {
+
+        for i := 0; i < reqs; i++ {
+            req, err := http.NewRequest("GET", "http://localhost:8080", nil)
+            if err != nil {
+                log.Println(err)
+            }
+            reqChan <- req
+        }
+    }(ch)
+
+
+    // for stdin := range ch {
+    //     fmt.Println("ahh")
+    //     reqChan <- stdin
+    // }
+
+
+    var (
+        conns int64
+        size  int64
+    )
+   
+
+    for conns < int64(reqs) {
+
+        select {
+        case message := <-respChan:
+            // fmt.Println(message)
+            _ = message
+            conns++
+        }
+       
+    }
+
+
+
+
     took := time.Since(start)
     ns := took.Nanoseconds()
     av := ns / conns
