@@ -74,18 +74,14 @@ func reader(conn *websocket.Conn) {
     }(ch)
 
 	i := 0
-	// wg := sync.WaitGroup{}
 	for {
-		// wg.Add(1)
-		// go func(i int) {
-			// read in a message
-			if i < 10 {
+			if i < 1 {
 				mytlsrequest := new(myTLSRequest)
 				mytlsrequest.RequestID = string('t')
-				mytlsrequest.Options.URL = "http://localhost:8080"
+				mytlsrequest.Options.URL = "http://httpbin.org/headers"
 				mytlsrequest.Options.Method = "GET"
 				mytlsrequest.Options.Headers = map[string]string{
-											"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
+											"Access-Control-Allow-Credentials": "Bearer someexampletoken",
 
 												}
 				
@@ -111,7 +107,7 @@ func reader(conn *websocket.Conn) {
 			case message := <-ch:
 				
 
-				fmt.Println(message.RequestID)
+				fmt.Println(message)
 			default:
 	
 			}
@@ -133,14 +129,6 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-
-	
-	// err = ws.WriteMessage(1, []byte("Hi Client!"))
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	// listen indefinitely for new messages coming
-	// through on our WebSocket connection
 	reader(ws)
 }
 
