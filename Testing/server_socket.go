@@ -75,10 +75,10 @@ func reader(conn *websocket.Conn) {
 
 	i := 0
 	for {
-			if i < 1 {
+			if i < 10000 {
 				mytlsrequest := new(myTLSRequest)
 				mytlsrequest.RequestID = string('t')
-				mytlsrequest.Options.URL = "http://httpbin.org/headers"
+				mytlsrequest.Options.URL = "http://httpbin.org/response-headers?ExampleResponseHeader=HeaderisPickedUpByServer"
 				mytlsrequest.Options.Method = "GET"
 				mytlsrequest.Options.Headers = map[string]string{
 											"Access-Control-Allow-Credentials": "Bearer someexampletoken",
