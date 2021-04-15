@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	addr     = flag.String("addr", ":8080", "TCP address to listen to")
+	addr     = flag.String("addr", ":8081", "TCP address to listen to")
 	compress = flag.Bool("compress", false, "Whether to enable transparent response compression")
 )
 

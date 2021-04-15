@@ -8,6 +8,7 @@ import (
     "runtime"
     "time"
     "io/ioutil"
+    "strings"
 )
 
 var (
@@ -48,15 +49,19 @@ func workerPool(reqChan chan *http.Request, respChan chan string) {
 // Worker
 func worker(reqChan chan *http.Request, respChan chan string) {
     for req := range reqChan {
-        resp, err := http.DefaultTransport.RoundTrip(req)
-        // r := Response{resp, err}
+        // resp, err := http.Get("http://localhost:8081")
+        client := &http.Client{}
+        rr, err := http.NewRequest("GET", "http://localhost:8081", strings.NewReader(""))
+        resp, err := client.Do(rr)
 
+        // r := Response{resp, err}
+        _ = req
         bodyBytes, err := ioutil.ReadAll(resp.Body)
         if err != nil {
             fmt.Print("bodyBytes" + err.Error())
         }
         r := string(bodyBytes)
-
+       
 
 
         respChan <- r
@@ -91,12 +96,13 @@ func main() {
 
     )
    
-
+    i := 0
     for conns < int64(reqs) {
 
         select {
         case message := <-respChan:
-            // fmt.Println(message)
+           i ++
+           fmt.Println(i)
             _ = message
             conns++
         }
