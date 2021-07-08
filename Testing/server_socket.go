@@ -1,10 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"encoding/json"
+	"time"
 	"github.com/gorilla/websocket"
 	// "sync"
 )
@@ -72,42 +73,47 @@ func reader(conn *websocket.Conn) {
         
        
     }(ch)
-
+	r := 0 
 	i := 0
-	for {
-			if i < 10000 {
-				mytlsrequest := new(myTLSRequest)
-				mytlsrequest.RequestID = string('t')
-				mytlsrequest.Options.URL = "http://localhost:8080"
-				mytlsrequest.Options.Method = "GET"
-				mytlsrequest.Options.Headers = map[string]string{
-											"Access-Control-Allow-Credentials": "Bearer someexampletoken",
+	start := time.Now()
+	defer func() {
+		log.Println("Execution Time: ", time.Since(start))
+	}()
+	go func() {
+		for i < 10000 {
+			mytlsrequest := new(myTLSRequest)
+			mytlsrequest.RequestID = string('t')
+			mytlsrequest.Options.URL = "http://localhost:8081"
+			mytlsrequest.Options.Method = "GET"
+			// mytlsrequest.Options.Headers = map[string]string{
+			// 							"Access-Control-Allow-Credentials": "Bearer someexampletoken",
 
-												}
+			// 								}
+			
+			mytlsrequest.Options.Ja3 = "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53-10,0-23-65281-10-11-35-16-5-51-43-13-45-28-21,29-23-24-25-256-257,0"
+
+			mytlsrequest.Options.UserAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+			data, err := json.Marshal(mytlsrequest)
+			if err != nil {
+				log.Print("Request_Id_On_The_Left" )
 				
-				mytlsrequest.Options.Ja3 = "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-21,29-23-24,0"
-
-
-				data, err := json.Marshal(mytlsrequest)
-				if err != nil {
-					log.Print("Request_Id_On_The_Left" )
-					
-				}
-
-				err = conn.WriteMessage(websocket.TextMessage, data)
-				if err != nil {
-					log.Print("Request_Id_On_The_Left" )
-				}
 			}
 
-			i++
+			err = conn.WriteMessage(websocket.TextMessage, data)
+			if err != nil {
+				log.Print("Request_Id_On_The_Left" )
+			}
+		}
+	}()
+	for r < 10000{
 
 	
 			select {
 			case message := <-ch:
+				r ++
+				// log.Println(message)
+				_ = message
 				
-
-				fmt.Println(message)
 			default:
 	
 			}
@@ -117,6 +123,7 @@ func reader(conn *websocket.Conn) {
 		// }(i)
 
 	}
+	log.Println("done")
 	// wg.Wait()
 	
 }
