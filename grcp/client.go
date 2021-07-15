@@ -22,8 +22,8 @@ var (
 )
 func runCycleTLS(client pb.CycleStreamClient) {
 	requests := []*pb.CycleTLSRequest{
-		{RequestID: "1", Options: &pb.Options{URL: "https://www.google.com", Method: "GET", Headers: "", Body: "", Ja3: "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53-10,0-23-65281-10-11-35-16-5-51-43-13-45-28-21,29-23-24-25-256-257,0", UserAgent: "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0", Proxy: "", Cookies: ""}},
-		{RequestID: "2", Options: &pb.Options{URL: "https://www.google.com", Method: "GET", Headers: "", Body: "", Ja3: "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53-10,0-23-65281-10-11-35-16-5-51-43-13-45-28-21,29-23-24-25-256-257,0", UserAgent: "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0", Proxy: "", Cookies: ""}},
+		{RequestID: "1", URL: "http://localhost:8081", Method: "GET", Headers: "", Body: "", Ja3: "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53-10,0-23-65281-10-11-35-16-5-51-43-13-45-28-21,29-23-24-25-256-257,0", UserAgent: "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0", Proxy: "", Cookies: ""},
+		{RequestID: "2", URL: "http://localhost:8081", Method: "GET", Headers: "", Body: "", Ja3: "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53-10,0-23-65281-10-11-35-16-5-51-43-13-45-28-21,29-23-24-25-256-257,0", UserAgent: "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0", Proxy: "", Cookies: ""},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -37,8 +37,9 @@ func runCycleTLS(client pb.CycleStreamClient) {
 	defer func() {
 		log.Println("Execution Time: ", time.Since(start))
 	}()
+	requestCount := 2
 	go func() {
-		for n < 10000 {
+		for i := 0; i < requestCount; i++ {
 			in, _ := stream.Recv()
 			// if err == io.EOF {
 			// 	// read done.
@@ -48,7 +49,9 @@ func runCycleTLS(client pb.CycleStreamClient) {
 			// if err != nil {
 			// 	log.Fatalf("Failed to receive a note : %v", err)
 			// }
+			log.Println(in)
 			_= in
+			
 			if in != nil {
 
 				// log.Printf("Got message %s at point(%d, %s)", in.RequestID, in.Status, in.Body)
@@ -60,15 +63,15 @@ func runCycleTLS(client pb.CycleStreamClient) {
 			
 		}
 		log.Println("done")
-		close(waitc)
+		// close(waitc)
 	}()
 	// for _, request := range requests {
-	for i := 1; i < 10002; i++ {
-		if err := stream.Send(requests[0]); err != nil {
+	for i := 0; i < requestCount; i++ {
+		if err := stream.Send(requests[i]); err != nil {
 			log.Fatalf("Failed to send a note: %v", err)
 		}
 	}
-	stream.CloseSend()
+	// stream.CloseSend()
 	<-waitc
 }
 
